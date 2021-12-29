@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 // model
@@ -22,6 +23,7 @@ var todos []Todo = []Todo{}
 func main() {
 
 	app := fiber.New()
+	app.Use(cors.New())
 
 	apiV1 := app.Group("/api/v1")
 
@@ -36,7 +38,7 @@ func main() {
 		newTodo.Id = len(todos) + 1
 		json.Unmarshal(c.Body(), &newTodo)
 		todos = append(todos, newTodo)
-		return c.JSON(todos)
+		return c.JSON(newTodo)
 	})
 
 	apiV1.Patch("/todos/:id", func(c *fiber.Ctx) error {
@@ -59,10 +61,19 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		var toRemoveTodo = todos[num-1]
-		todos = append(todos[0:num-1], todos[num:]...)
+
+		var tt []Todo
+		var toRemoveTodo Todo
+		for _, val := range todos {
+			if int64(val.Id) != num {
+				tt = append(tt, val)
+			} else {
+				toRemoveTodo = val
+			}
+		}
+		todos = tt
 		return c.JSON(toRemoveTodo)
 	})
 
-	app.Listen("127.0.0.1:3000")
+	app.Listen("127.0.0.1:8000")
 }
